@@ -5,6 +5,7 @@ import { useAuth } from '../hooks/useAuth'
 const Register = () => {
 
     const navigate = useNavigate()
+    //two way binding
     const [ username, setUsername ] = useState("")
     const [ email, setEmail ] = useState("")
     const [ password, setPassword ] = useState("")

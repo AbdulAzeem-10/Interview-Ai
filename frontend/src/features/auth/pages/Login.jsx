@@ -8,13 +8,14 @@ const Login = () => {
     const { loading, handleLogin } = useAuth()
     const navigate = useNavigate()
 
+    //two way biding
     const [ email, setEmail ] = useState("")
     const [ password, setPassword ] = useState("")
 
     const handleSubmit = async (e) => {
         e.preventDefault()
         await handleLogin({email,password})
-        navigate('/')
+        navigate('/')//user login successful re-route to "/"->page
     }
 
     if(loading){
