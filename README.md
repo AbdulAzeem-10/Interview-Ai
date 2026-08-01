@@ -1,4 +1,3 @@
-````markdown
 # 🚀 Resume Analyzer AI
 
 > **An AI-powered Full-Stack Recruitment Intelligence Platform that analyzes resumes, evaluates candidate-job compatibility, generates recruiter-grade interview reports, and creates ATS-optimized resumes using Google's Gemini Large Language Models.**
@@ -633,7 +632,7 @@ Introduced a unified structured output schema and runtime validation pipeline to
 
 ---
 
-# 👨‍💻 Author
+# 👨💻 Author
 
 **Abdul Azeem**
 
@@ -648,4 +647,3 @@ Passionate about building scalable backend systems, AI-powered developer tools, 
 If you found this project interesting or helpful, consider giving it a **⭐ Star** on GitHub.
 
 It helps others discover the project and motivates future improvements.
-````
