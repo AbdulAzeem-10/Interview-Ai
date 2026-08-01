@@ -17,59 +17,66 @@ export const useInterview = () => {
 
     const generateReport = async ({ jobDescription, selfDescription, resumeFile }) => {
         setLoading(true)
-        let response = null
+        let result = null
         try {
-            response = await generateInterviewReport({ jobDescription, selfDescription, resumeFile })
-            setReport(response.interviewReport)
+            const response = await generateInterviewReport({ jobDescription, selfDescription, resumeFile })
+            result = response.interviewReport
+            setReport(result)
         } catch (error) {
             console.log(error)
+            throw error
         } finally {
             setLoading(false)
         }
 
-        return response.interviewReport
+        return result
     }
 
     const getReportById = async (interviewId) => {
         setLoading(true)
-        let response = null
+        let result = null
         try {
-            response = await getInterviewReportById(interviewId)
-            setReport(response.interviewReport)
+            const response = await getInterviewReportById(interviewId)
+            result = response.interviewReport
+            setReport(result)
         } catch (error) {
             console.log(error)
+            throw error
         } finally {
             setLoading(false)
         }
-        return response.interviewReport
+        return result
     }
 
     const getReports = async () => {
         setLoading(true)
-        let response = null
+        let result = null
         try {
-            response = await getAllInterviewReports()
-            setReports(response.interviewReports)
+            const response = await getAllInterviewReports()
+            result = response.interviewReports
+            setReports(result)
         } catch (error) {
             console.log(error)
         } finally {
             setLoading(false)
         }
 
-        return response.interviewReports
+        return result
     }
 
     const getResumePdf = async (interviewReportId) => {
         setLoading(true)
-        let response = null
         try {
-            response = await generateResumePdf({ interviewReportId })
-            const url = window.URL.createObjectURL(new Blob([ response ], { type: "application/pdf" }))
+            const blobData = await generateResumePdf({ interviewReportId })
+            // blobData is already a Blob-> no need to re-wrap
+            const url = window.URL.createObjectURL(blobData)
             const link = document.createElement("a")
             link.href = url
             link.setAttribute("download", `resume_${interviewReportId}.pdf`)
             document.body.appendChild(link)
             link.click()
+            link.remove()
+            window.URL.revokeObjectURL(url)
         }
         catch (error) {
             console.log(error)
@@ -79,9 +86,9 @@ export const useInterview = () => {
     }
 
     useEffect(() => {
-        if (interviewId) {
-            getReportById(interviewId)
-        } else {
+        // Only auto-fetch on Home page. 
+        // The Interview page manages its own fetch via its own useEffect.
+        if (!interviewId) {
             getReports()
         }
     }, [ interviewId ])

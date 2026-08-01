@@ -8,14 +8,30 @@ const Home = () => {
     const { loading, generateReport,reports } = useInterview()
     const [ jobDescription, setJobDescription ] = useState("")
     const [ selfDescription, setSelfDescription ] = useState("")
+    const [ error, setError ] = useState("")
     const resumeInputRef = useRef()
 
     const navigate = useNavigate()
 
     const handleGenerateReport = async () => {
         const resumeFile = resumeInputRef.current.files[ 0 ]
-        const data = await generateReport({ jobDescription, selfDescription, resumeFile })
-        navigate(`/interview/${data._id}`)
+        setError("")
+        if (!jobDescription.trim()) {
+            setError("Please add the target job description.")
+            return
+        }
+        if (!resumeFile && !selfDescription.trim()) {
+            setError("Upload a resume PDF or add a self description.")
+            return
+        }
+        try {
+            const data = await generateReport({ jobDescription, selfDescription, resumeFile })
+            if (data && data._id) {
+                navigate(`/interview/${data._id}`)
+            }
+        } catch (err) {
+            setError(err.response?.data?.message || "Unable to generate your interview strategy.")
+        }
     }
 
     if (loading) {
@@ -54,7 +70,7 @@ const Home = () => {
                             placeholder={`Paste the full job description here...\ne.g. 'Senior Frontend Engineer at Google requires proficiency in React, TypeScript, and large-scale system design...'`}
                             maxLength={5000}
                         />
-                        <div className='char-counter'>0 / 5000 chars</div>
+                        <div className='char-counter'>{jobDescription.length} / 5000 chars</div>
                     </div>
 
                     {/* Vertical Divider */}
@@ -70,20 +86,7 @@ const Home = () => {
                         </div>
 
                         {/* Upload Resume */}
-                        <div className='upload-section'>
-                            <label className='section-label'>
-                                Upload Resume
-                                <span className='badge badge--best'>Best Results</span>
-                            </label>
-                            <label className='dropzone' htmlFor='resume'>
-                                <span className='dropzone__icon'>
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 16 12 12 8 16" /><line x1="12" y1="12" x2="12" y2="21" /><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" /></svg>
-                                </span>
-                                <p className='dropzone__title'>Click to upload or drag &amp; drop</p>
-                                <p className='dropzone__subtitle'>PDF or DOCX (Max 5MB)</p>
-                                <input ref={resumeInputRef} hidden type='file' id='resume' name='resume' accept='.pdf,.docx' />
-                            </label>
-                        </div>
+                        <DropzoneUpload resumeInputRef={resumeInputRef} />
 
                         {/* OR Divider */}
                         <div className='or-divider'><span>OR</span></div>
@@ -113,6 +116,7 @@ const Home = () => {
                 {/* Card Footer */}
                 <div className='interview-card__footer'>
                     <span className='footer-info'>AI-Powered Strategy Generation &bull; Approx 30s</span>
+                    {error && <p className='form-error' role='alert'>{error}</p>}
                     <button
                         onClick={handleGenerateReport}
                         className='generate-btn'>
@@ -147,5 +151,147 @@ const Home = () => {
         </div>
     )
 }
+
+
+// ── Dropzone sub-component ────────────────────────────────────────────────────
+const DropzoneUpload = ({ resumeInputRef }) => {
+
+    const [ dragActive, setDragActive ] = useState(false)
+    const [ selectedFile, setSelectedFile ] = useState(null)
+
+    const ACCEPTED_TYPES = [ 'application/pdf' ]
+    const MAX_SIZE_MB = 5
+
+    const applyFile = (file) => {
+        if (!file) return
+        if (!ACCEPTED_TYPES.includes(file.type)) {
+            alert('Only PDF files are accepted.')
+            return
+        }
+        if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+            alert(`File is too large. Max size is ${MAX_SIZE_MB}MB.`)
+            return
+        }
+        setSelectedFile(file)
+        // Sync the file into the hidden input so the parent can still read resumeInputRef.current.files[0]
+        const dataTransfer = new DataTransfer()
+        dataTransfer.items.add(file)
+        resumeInputRef.current.files = dataTransfer.files
+    }
+
+    const handleDragEnter = (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        setDragActive(true)
+    }
+
+    const handleDragOver = (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        setDragActive(true)
+    }
+
+    const handleDragLeave = (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        setDragActive(false)
+    }
+
+    const handleDrop = (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        setDragActive(false)
+        const file = e.dataTransfer.files[0]
+        applyFile(file)
+    }
+
+    const handleInputChange = (e) => {
+        const file = e.target.files[0]
+        applyFile(file)
+    }
+
+    const handleRemove = (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        setSelectedFile(null)
+        resumeInputRef.current.value = ''
+    }
+
+    const openFilePicker = () => {
+        resumeInputRef.current.click()
+    }
+
+    return (
+        <div className='upload-section'>
+            <label className='section-label'>
+                Upload Resume
+                <span className='badge badge--best'>Best Results</span>
+            </label>
+
+            {selectedFile ? (
+                // ── File selected state ──────────────────────────────────────
+                <div className='dropzone dropzone--selected'>
+                    <span className='dropzone__icon dropzone__icon--success'>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="9 15 12 18 15 15"/><line x1="12" y1="18" x2="12" y2="11"/></svg>
+                    </span>
+                    <p className='dropzone__title dropzone__filename'>{selectedFile.name}</p>
+                    <p className='dropzone__subtitle'>{(selectedFile.size / 1024).toFixed(1)} KB &bull; Ready to upload</p>
+                    <div className='dropzone__actions'>
+                        <button className='dropzone__btn dropzone__btn--change' onClick={openFilePicker} type='button'>
+                            Change File
+                        </button>
+                        <button className='dropzone__btn dropzone__btn--remove' onClick={handleRemove} type='button'>
+                            Remove
+                        </button>
+                    </div>
+                    <input
+                        ref={resumeInputRef}
+                        hidden
+                        type='file'
+                        id='resume'
+                        name='resume'
+                        accept='.pdf,application/pdf'
+                        onChange={handleInputChange}
+                    />
+                </div>
+            ) : (
+                // ── Empty / drag-active state ────────────────────────────────
+                <div
+                    className={`dropzone ${dragActive ? 'dropzone--drag-active' : ''}`}
+                    onDragEnter={handleDragEnter}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    onClick={openFilePicker}
+                    role='button'
+                    tabIndex={0}
+                    onKeyDown={(e) => e.key === 'Enter' && openFilePicker()}
+                >
+                    <span className='dropzone__icon'>
+                        {dragActive ? (
+                            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+                        ) : (
+                            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+                        )}
+                    </span>
+                    <p className='dropzone__title'>
+                        {dragActive ? 'Drop your file here' : 'Click to upload or drag & drop'}
+                    </p>
+                    <p className='dropzone__subtitle'>PDF only (Max 5MB)</p>
+                    <input
+                        ref={resumeInputRef}
+                        hidden
+                        type='file'
+                        id='resume'
+                        name='resume'
+                        accept='.pdf,application/pdf'
+                        onChange={handleInputChange}
+                    />
+                </div>
+            )}
+        </div>
+    )
+}
+
 
 export default Home

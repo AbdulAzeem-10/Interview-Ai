@@ -1,25 +1,37 @@
 import React,{useState} from 'react'
-import { useNavigate, Link } from 'react-router'
+import { useNavigate, Link, Navigate, useLocation } from 'react-router'
 import "../auth.form.scss"
 import { useAuth } from '../hooks/useAuth'
 
 const Login = () => {
 
-    const { loading, handleLogin } = useAuth()
+    const { loading, handleLogin, user } = useAuth()
     const navigate = useNavigate()
+    const location = useLocation()
 
     //two way biding
     const [ email, setEmail ] = useState("")
     const [ password, setPassword ] = useState("")
+    const [ error, setError ] = useState("")
 
     const handleSubmit = async (e) => {
         e.preventDefault()
-        await handleLogin({email,password})
-        navigate('/')//user login successful re-route to "/"->page
+        setError("")
+        try {
+            await handleLogin({email,password})
+            navigate('/')
+        } catch (err) {
+            setError(err.response?.data?.message || "Unable to log in. Please try again.")
+        }
     }
 
     if(loading){
         return (<main><h1>Loading.......</h1></main>)
+    }
+
+    // Already logged in, go to home
+    if(user){
+        return <Navigate to="/" />
     }
 
 
@@ -27,6 +39,8 @@ const Login = () => {
         <main>
             <div className="form-container">
                 <h1>Login</h1>
+                {location.state?.message && <p className='form-success'>{location.state.message}</p>}
+                {error && <p className='form-error' role='alert'>{error}</p>}
                 <form onSubmit={handleSubmit}>
                     <div className="input-group">
                         <label htmlFor="email">Email</label>

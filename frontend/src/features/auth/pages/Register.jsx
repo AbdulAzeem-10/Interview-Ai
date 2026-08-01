@@ -1,6 +1,7 @@
 import React,{useState} from 'react'
-import { useNavigate, Link } from 'react-router'
+import { useNavigate, Link, Navigate } from 'react-router'
 import { useAuth } from '../hooks/useAuth'
+import "../auth.form.scss"
 
 const Register = () => {
 
@@ -9,23 +10,35 @@ const Register = () => {
     const [ username, setUsername ] = useState("")
     const [ email, setEmail ] = useState("")
     const [ password, setPassword ] = useState("")
+    const [ error, setError ] = useState("")
 
-    const {loading,handleRegister} = useAuth()
+    const {loading, handleRegister, user} = useAuth()
     
     const handleSubmit = async (e) => {
         e.preventDefault()
-        await handleRegister({username,email,password})
-        navigate("/")
+        setError("")
+        try {
+            await handleRegister({username,email,password})
+            navigate("/login", { state: { message: "Registration successful. Please log in." } })
+        } catch (err) {
+            setError(err.response?.data?.message || "Unable to register. Please try again.")
+        }
     }
 
     if(loading){
         return (<main><h1>Loading.......</h1></main>)
     }
 
+    // Already logged in, go to home
+    if(user){
+        return <Navigate to="/" />
+    }
+
     return (
         <main>
             <div className="form-container">
                 <h1>Register</h1>
+                {error && <p className='form-error' role='alert'>{error}</p>}
 
                 <form onSubmit={handleSubmit}>
 
