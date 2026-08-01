@@ -50,9 +50,9 @@ async function registerUserController(req, res){
 
     res.cookie("token", token);
 
-
-     res.status(201).json({
+    res.status(201).json({
         message: "User registered successfully",
+        token,
         user: {
             id: user._id,
             username: user.username,
@@ -60,11 +60,7 @@ async function registerUserController(req, res){
         }
     });
 
-
-
 }
-
-
 
 /**
  * @name loginUserController
@@ -97,9 +93,10 @@ async function loginUserController(req, res) {
         { expiresIn: "1d" }
     );
 
-    res.cookie("token", token)
+    res.cookie("token", token);
     res.status(200).json({
         message: "User loggedIn successfully.",
+        token,
         user: {
             id: user._id,
             username: user.username,
