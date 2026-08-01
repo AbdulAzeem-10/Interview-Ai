@@ -21,6 +21,21 @@ const interviewRouter = require("./routes/interview.routes");
 app.use("/api/auth", authRouter);
 app.use("/api/interview", interviewRouter);
 
+app.use((error, req, res, next) => {
+    if (error.name === "MulterError") {
+        const message = error.code === "LIMIT_FILE_SIZE"
+            ? "Resume PDF must be 5MB or smaller."
+            : "Please upload a PDF file using the 'resume' field.";
+        return res.status(400).json({ message });
+    }
+
+    if (error) {
+        return res.status(500).json({ message: error.message || "Unexpected server error." });
+    }
+
+    next();
+});
+
 
 
 module.exports=app;

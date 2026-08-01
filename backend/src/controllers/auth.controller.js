@@ -41,18 +41,8 @@ async function registerUserController(req, res){
         password: hash
     });
 
-    //token setup
-     const token = jwt.sign(
-        { id: user._id, username: user.username },
-        process.env.JWT_SECRET,
-        { expiresIn: "1d" }//->expires in 1 day
-    );
-
-    res.cookie("token", token);
-
     res.status(201).json({
-        message: "User registered successfully",
-        token,
+        message: "User registered successfully. Please log in to continue.",
         user: {
             id: user._id,
             username: user.username,
@@ -93,7 +83,11 @@ async function loginUserController(req, res) {
         { expiresIn: "1d" }
     );
 
-    res.cookie("token", token);
+    res.cookie("token", token, {
+        httpOnly: true,
+        sameSite: "lax",
+        maxAge: 24 * 60 * 60 * 1000 // 1 day in ms
+    });
     res.status(200).json({
         message: "User loggedIn successfully.",
         token,
